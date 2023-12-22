@@ -1,74 +1,70 @@
-import { useContext } from "react"
+import { useContext, useEffect, useMemo } from "react"
 import { CarrinhoContext } from "@/context/CarrinhoContext"
+import { ADD_PRODUTO, REMOVE_PRODUTO, UPDATE_QUANTIDADE } from '../reducers/carrinhoReducer'
+
+const addProdutoAction = (novoProduto) => ({
+
+    type: ADD_PRODUTO,
+    payload: novoProduto
+
+}) 
+
+const removeProdutoAction = (produtoId) => ({
+
+    type: REMOVE_PRODUTO,
+    payload: produtoId
+
+}) 
+
+const updateQuantidadeAction = (produtoId, quantidade) => ({
+
+    type: UPDATE_QUANTIDADE,
+    payload: { produtoId, quantidade }
+
+}) 
 
 export const useCarrinhoContext = () => {
 
-    const { carrinho, setCarrinho } = useContext(CarrinhoContext)
-
-    const mudarQuantidade = (id, quantidade) => {
-
-        return carrinho.map( (itemCarrinho) => {
-
-            if (itemCarrinho.id === id) itemCarrinho.quantidade += quantidade
-
-            return itemCarrinho
-
-        })
-
-    } 
+    const { 
+        carrinho,
+        dispatch, 
+        quantidade,
+        valorTotal,
+    } = useContext(CarrinhoContext)
 
     const adicionarProduto = (novoProduto) => {
 
-        const temProduto = carrinho.some((itemCarrinho) => itemCarrinho.id === novoProduto.id)
-
-        if (!temProduto){
-            novoProduto.quantidade = 1
-            return setCarrinho((carrinhoAnterior) => [
-            ...carrinhoAnterior,
-            novoProduto,
-            ])
-        }
-
-        const carrinhoAtualizado = mudarQuantidade(novoProduto.id, 1)
-
-        setCarrinho([...carrinhoAtualizado])
+       dispatch(addProdutoAction(novoProduto))
 
     }
 
-    const removerProduto = (id) => {
+    
 
-        const produto = carrinho.find((itemCarrinho) => itemCarrinho.id === id)
+    function removerProduto(id) {
+        const produto = carrinho.find((item) => item.id === id);
 
-        const ultimoProduto = produto.quantidade === 1
-
-        if (ultimoProduto) {
-
-            return setCarrinho((carrinhoAnterior) => 
-            carrinhoAnterior.filter(( itemCarrinho ) => itemCarrinho.id !== id)
-            )
-
+        if (produto && produto.quantidade > 1) {
+            dispatch(updateQuantidadeAction(id, produto.quantidade - 1));
+        } else {
+            dispatch(removeProdutoAction(id));
         }
-
-        const carrinhoAtualizado = mudarQuantidade(id, -1)
-
-        setCarrinho([...carrinhoAtualizado])
-
     }
+
+
 
     const removerProdutoCarrinho = (id) => {
 
-        const produto = carrinho.filter( (itemCarrinho) => itemCarrinho.id !== id)
-
-        setCarrinho(produto)
+        dispatch(removeProdutoAction(id))
 
     }
 
     return {
         carrinho,
-        setCarrinho,
         adicionarProduto,
         removerProduto,
-        removerProdutoCarrinho
+        removerProdutoCarrinho,
+        valorTotal,
+        quantidade
     }
     
 
